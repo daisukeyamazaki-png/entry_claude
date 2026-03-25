@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude入門 — Code & Cowork 完全ガイド</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+    background: #f7f7f5;
+    color: #1a1a1a;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #e5e5e5;
+    height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+  }
+  .nav-logo { font-weight: 800; font-size: 15px; }
+  .nav-links { display: flex; gap: 2px; }
+  .nav-links button {
+    background: none; border: none; color: #888;
+    padding: 5px 11px; border-radius: 6px;
+    cursor: pointer; font-size: 12.5px; transition: all 0.15s;
+  }
+  .nav-links button:hover { background: #f0f0f0; color: #1a1a1a; }
+  .nav-links button.on { background: #1a1a1a; color: #fff; font-weight: 600; }
+
+  /* ── SIDEBAR PROGRESS ── */
+  .sidebar {
+    position: fixed; left: 0; top: 52px; bottom: 0;
+    width: 200px; padding: 28px 16px;
+    border-right: 1px solid #e5e5e5;
+    background: #fff;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  .sidebar-title { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+  .sb-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 6px 8px; border-radius: 6px; margin-bottom: 2px;
+    cursor: pointer; transition: background 0.1s;
+    font-size: 12.5px; color: #888; line-height: 1.4;
+  }
+  .sb-item:hover { background: #f5f5f5; color: #1a1a1a; }
+  .sb-item.on { background: #f0f0f0; color: #1a1a1a; font-weight: 600; }
+  .sb-dot {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid #ddd; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: #aaa;
+    margin-top: 1px;
+    transition: all 0.2s;
+  }
+  .sb-item.done .sb-dot { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
+  .sb-item.on .sb-dot { border-color: #1a1a1a; color: #1a1a1a; }
+
+  /* ── LAYOUT ── */
+  main { margin-left: 200px; padding-top: 52px; }
+  .page { min-height: 100vh; }
+  .inner { max-width: 740px; padding: 64px 48px; }
+  .section-divider { border: none; border-top: 1px solid #e8e8e8; margin: 48px 0; }
+
+  /* ── HERO ── */
+  #s-hero .inner { display: flex; flex-direction: column; gap: 22px; justify-content: center; min-height: calc(100vh - 52px); }
+  .badge { display: inline-block; background: #f0f0f0; color: #555; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.06em; }
+  h1 { font-size: clamp(30px, 4.5vw, 50px); font-weight: 900; line-height: 1.12; letter-spacing: -0.02em; }
+  .hero-sub { font-size: 16px; color: #555; max-width: 520px; }
+  .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 460px; }
+  .hero-card {
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 10px;
+    padding: 16px 18px; cursor: pointer; transition: all 0.15s;
+  }
+  .hero-card:hover { border-color: #aaa; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+  .hero-card .hc-icon { font-size: 22px; margin-bottom: 6px; }
+  .hero-card .hc-name { font-size: 14px; font-weight: 700; }
+  .hero-card .hc-desc { font-size: 12px; color: #888; margin-top: 2px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; background: #1a1a1a; color: #fff; border: none; padding: 11px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .btn:hover { background: #333; }
+  .btn-ghost { background: #fff; color: #1a1a1a; border: 1px solid #ddd; }
+  .btn-ghost:hover { background: #f5f5f5; }
+
+  /* ── CHAPTER HEADER ── */
+  .ch-num { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  h2 { font-size: 28px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.01em; }
+  .ch-desc { color: #666; margin-bottom: 36px; font-size: 15px; max-width: 580px; }
+
+  /* ── LESSON BLOCKS ── */
+  .lesson {
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 12px;
+    padding: 28px; margin-bottom: 16px;
+  }
+  .lesson-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    cursor: pointer; user-select: none;
+  }
+  .lesson-num {
+    width: 28px; height: 28px; background: #1a1a1a; color: #fff;
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .lesson-title { font-size: 16px; font-weight: 700; flex: 1; }
+  .lesson-toggle { color: #aaa; font-size: 12px; transition: transform 0.2s; }
+  .lesson-toggle.open { transform: rotate(180deg); }
+  .lesson-body { display: none; }
+  .lesson-body.open { display: block; }
+  .lesson-body p { color: #555; font-size: 14px; margin-bottom: 12px; }
+  .lesson-body h4 { font-size: 14px; font-weight: 700; margin: 20px 0 8px; }
+  .lesson-body ul { list-style: none; padding: 0; margin-bottom: 12px; }
+  .lesson-body ul li { font-size: 14px; color: #555; padding: 4px 0 4px 18px; position: relative; }
+  .lesson-body ul li::before { content: '·'; position: absolute; left: 6px; color: #aaa; font-weight: 700; }
+  .lesson-body ol { padding-left: 20px; margin-bottom: 12px; }
+  .lesson-body ol li { font-size: 14px; color: #555; padding: 3px 0; }
+
+  /* ── CODE ── */
+  .code {
+    background: #1c1c1c; color: #d4d4d4;
+    border-radius: 8px; padding: 16px 18px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12.5px; line-height: 1.85;
+    margin: 12px 0; overflow-x: auto; position: relative;
+  }
+  .code .g { color: #6ee7b7; }
+  .code .b { color: #93c5fd; }
+  .code .y { color: #fcd34d; }
+  .code .r { color: #fca5a5; }
+  .code .dim { color: #555; }
+  .code .w { color: #fff; }
+  .cpbtn {
+    position: absolute; top: 10px; right: 10px;
+    background: #333; border: none; color: #999; font-size: 11px;
+    padding: 3px 9px; border-radius: 4px; cursor: pointer;
+  }
+  .cpbtn:hover { color: #fff; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-radius: 8px; padding: 14px 18px; margin: 14px 0;
+    font-size: 13.5px; display: flex; gap: 10px;
+  }
+  .callout.tip { background: #f0fdf4; border-left: 3px solid #4ade80; color: #166534; }
+  .callout.warn { background: #fffbeb; border-left: 3px solid #fbbf24; color: #92400e; }
+  .callout.info { background: #eff6ff; border-left: 3px solid #60a5fa; color: #1e3a8a; }
+  .callout-icon { flex-shrink: 0; font-size: 15px; }
+  .callout p { margin: 0; }
+
+  /* ── COMPARE TABLE ── */
+  .ctable { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px; }
+  .ctable th { background: #f5f5f5; font-weight: 700; padding: 10px 14px; text-align: left; border: 1px solid #e5e5e5; }
+  .ctable td { padding: 9px 14px; border: 1px solid #e5e5e5; color: #444; vertical-align: top; }
+  .ctable tr:nth-child(even) td { background: #fafafa; }
+
+  /* ── STEPS ── */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step { display: flex; gap: 16px; padding-bottom: 28px; position: relative; }
+  .step:not(:last-child)::before { content: ''; position: absolute; left: 13px; top: 30px; bottom: 0; width: 1px; background: #e5e5e5; }
+  .step-n { width: 28px; height: 28px; background: #1a1a1a; color: #fff; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; z-index: 1; }
+  .step-b h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; padding-top: 4px; }
+  .step-b p { font-size: 13.5px; color: #555; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #e5e5e5; margin-bottom: 20px; }
+  .tbtn { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 16px; margin-bottom: -1px; font-size: 13px; font-weight: 500; color: #888; cursor: pointer; transition: all 0.15s; }
+  .tbtn.on { color: #1a1a1a; border-bottom-color: #1a1a1a; font-weight: 700; }
+  .tcnt { display: none; }
+  .tcnt.on { display: block; }
+
+  /* ── TIPS COMPARE ── */
+  .tip-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .tip { border-radius: 8px; padding: 14px 16px; font-size: 13.5px; }
+  .tip .tlbl { font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+  .tip.bad { background: #fff5f5; border: 1px solid #fecaca; }
+  .tip.bad .tlbl { color: #dc2626; }
+  .tip.good { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .tip.good .tlbl { color: #16a34a; }
+
+  /* ── DECISION ── */
+  .decision { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 22px; }
+  .d-q { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+  .d-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dbtn { background: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 7px; padding: 8px 14px; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+  .dbtn:hover { background: #eee; border-color: #ccc; }
+  .d-result { margin-top: 14px; padding: 14px 16px; background: #f8f8f8; border-radius: 8px; font-size: 13.5px; display: none; line-height: 1.6; }
+  .d-result button { background: none; border: none; font-size: 12px; color: #aaa; cursor: pointer; margin-top: 8px; display: block; }
+
+  /* ── KEY-VALUE LIST ── */
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 13.5px; margin: 12px 0; }
+  .kv .k { font-family: monospace; font-size: 13px; font-weight: 700; color: #1a1a1a; white-space: nowrap; }
+  .kv .v { color: #555; }
+
+  /* ── QUIZ ── */
+  .qcard { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 22px; margin-bottom: 14px; }
+  .qn { font-size: 11px; color: #aaa; margin-bottom: 8px; font-weight: 600; }
+  .qt { font-size: 15px; font-weight: 700; margin-bottom: 14px; line-height: 1.5; }
+  .opts { display: flex; flex-direction: column; gap: 7px; }
+  .opt { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 8px; padding: 11px 14px; text-align: left; font-size: 13.5px; cursor: pointer; transition: all 0.15s; width: 100%; }
+  .opt:hover:not([disabled]) { border-color: #aaa; background: #f0f0f0; }
+  .opt.ok { background: #f0fdf4; border-color: #4ade80; color: #166534; }
+  .opt.ng { background: #fff5f5; border-color: #fca5a5; color: #991b1b; }
+  .qfb { margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; line-height: 1.6; }
+  .qfb.on { display: block; }
+  .qfb.ok { background: #f0fdf4; color: #166534; }
+  .qfb.ng { background: #fff5f5; color: #991b1b; }
+  .score-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 36px; text-align: center; display: none; }
+  .score-num { font-size: 54px; font-weight: 900; letter-spacing: -0.03em; }
+  .score-msg { font-size: 17px; font-weight: 700; margin: 8px 0 4px; }
+  .score-sub { font-size: 13px; color: #888; }
+
+  /* ── CHEAT GRID ── */
+  .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cheat { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 14px 16px; }
+  .cheat .cmd { font-family: monospace; font-size: 13px; font-weight: 700; }
+  .cheat .cdesc { font-size: 12.5px; color: #777; margin-top: 3px; }
+
+  /* ── FLOW ── */
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; margin: 14px 0; }
+  .flow-node { background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px; padding: 8px 14px; font-weight: 600; }
+  .flow-arrow { color: #aaa; font-size: 16px; }
+
+  /* ── TAG ── */
+  .tag { display: inline-block; background: #f0f0f0; color: #555; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: 600; margin: 2px; }
+
+  /* ── OS SWITCHER ── */
+  .os-switcher {
+    display: inline-flex; background: #2a2a2a; border-radius: 6px;
+    padding: 3px; gap: 2px; margin-bottom: 10px;
+  }
+  .os-btn {
+    background: none; border: none; color: #888;
+    padding: 4px 12px; border-radius: 4px; cursor: pointer;
+    font-size: 11.5px; font-weight: 600; font-family: inherit;
+    transition: all 0.15s; display: flex; align-items: center; gap: 5px;
+  }
+  .os-btn.on { background: #444; color: #fff; }
+  .os-panel { display: none; }
+  .os-panel.on { display: block; }
+  .os-block { position: relative; }
+
+  /* ── Q&A ── */
+  .qa-search-wrap {
+    position: relative; margin-bottom: 28px;
+  }
+  .qa-search {
+    width: 100%; padding: 13px 44px 13px 16px;
+    border: 1px solid #ddd; border-radius: 10px;
+    font-size: 14px; background: #fff; color: #1a1a1a;
+    outline: none; transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .qa-search:focus { border-color: #aaa; }
+  .qa-search-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #aaa; font-size: 16px; pointer-events: none; }
+  .qa-cats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
+  .qa-cat {
+    background: #f0f0f0; border: 1px solid #e0e0e0;
+    border-radius: 100px; padding: 5px 14px;
+    font-size: 12.5px; cursor: pointer; transition: all 0.15s;
+    font-weight: 500; color: #555;
+  }
+  .qa-cat:hover { background: #e5e5e5; color: #1a1a1a; }
+  .qa-cat.on { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .qa-list { display: flex; flex-direction: column; gap: 8px; }
+  .qa-item {
+    background: #fff; border: 1px solid #e5e5e5;
+    border-radius: 10px; overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .qa-item:hover { border-color: #ccc; }
+  .qa-q {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 16px 18px; cursor: pointer; gap: 12px;
+    font-size: 14px; font-weight: 600; line-height: 1.5;
+  }
+  .qa-q-text { flex: 1; }
+  .qa-q-icon { color: #aaa; flex-shrink: 0; font-size: 13px; margin-top: 2px; transition: transform 0.2s; }
+  .qa-q-icon.open { transform: rotate(180deg); }
+  .qa-a {
+    padding: 0 18px; max-height: 0; overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.2s;
+    font-size: 13.5px; color: #555; line-height: 1.75;
+    border-top: 0px solid #f0f0f0;
+  }
+  .qa-a.open {
+    max-height: 600px; padding: 0 18px 18px;
+    border-top: 1px solid #f0f0f0;
+  }
+  .qa-a p { margin-top: 14px; }
+  .qa-a p:first-child { margin-top: 14px; }
+  .qa-a code { background: #f0f0f0; padding: 1px 6px; border-radius: 4px; font-size: 12.5px; font-family: monospace; }
+  .qa-a ul { margin: 10px 0 0 0; padding-left: 18px; }
+  .qa-a ul li { padding: 3px 0; }
+  .qa-a .tag { display: inline-block; background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 600; color: #555; margin-right: 4px; }
+  .qa-none { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
+  .qa-count { font-size: 12px; color: #aaa; margin-bottom: 14px; }
+
+  /* ── FOOTER ── */
+  footer { padding: 28px 48px; font-size: 12px; color: #aaa; border-top: 1px solid #e5e5e5; }
+  footer a { color: #888; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    main { margin-left: 0; }
+    .inner { padding: 48px 20px; }
+    .tip-pair, .cheat-grid, .hero-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">Claude入門</span>
+  <div class="nav-links">
+    <button onclick="go('s-hero')" id="n-hero">ホーム</button>
+    <button onclick="go('s-basics')" id="n-basics">基礎</button>
+    <button onclick="go('s-code')" id="n-code">Code</button>
+    <button onclick="go('s-cowork')" id="n-cowork">Cowork</button>
+    <button onclick="go('s-prompt')" id="n-prompt">プロンプト</button>
+    <button onclick="go('s-workflow')" id="n-workflow">実践</button>
+    <button onclick="go('s-quiz')" id="n-quiz">クイズ</button>
+    <button onclick="go('s-qa')" id="n-qa">Q&amp;A</button>
+    <button onclick="go('s-cheat')" id="n-cheat">まとめ</button>
+  </div>
+</nav>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-title">目次</div>
+  <div class="sb-item on" onclick="go('s-hero')" id="sb-hero"><div class="sb-dot">⬤</div><span>ホーム</span></div>
+  <div class="sb-item" onclick="go('s-basics')" id="sb-basics"><div class="sb-dot">1</div><span>Claudeの基礎知識</span></div>
+  <div class="sb-item" onclick="go('s-code')" id="sb-code"><div class="sb-dot">2</div><span>Claude Code入門</span></div>
+  <div class="sb-item" onclick="go('s-cowork')" id="sb-cowork"><div class="sb-dot">3</div><span>Cowork入門</span></div>
+  <div class="sb-item" onclick="go('s-prompt')" id="sb-prompt"><div class="sb-dot">4</div><span>プロンプト技術</span></div>
+  <div class="sb-item" onclick="go('s-workflow')" id="sb-workflow"><div class="sb-dot">5</div><span>実践ワークフロー</span></div>
+  <div class="sb-item" onclick="go('s-quiz')" id="sb-quiz"><div class="sb-dot">6</div><span>理解度クイズ</span></div>
+  <div class="sb-item" onclick="go('s-qa')" id="sb-qa"><div class="sb-dot">7</div><span>よくある質問</span></div>
+  <div class="sb-item" onclick="go('s-cheat')" id="sb-cheat"><div class="sb-dot">8</div><span>チートシート</span></div>
+</aside>
+
+<main>
+
+<!-- ══════════════════════════════════ HERO ══════════════════════════════════ -->
+<section class="page" id="s-hero">
+<div class="inner">
+  <div class="badge">完全入門ガイド · 読了時間 約25分</div>
+  <h1>Claude Code &<br>Coworkを<br>使いこなす</h1>
+  <p class="hero-sub">IT知識を活かして、Anthropicが提供する2つのAIツールの違いを理解し、実際の業務に組み込む方法を学びます。</p>
+  <div class="hero-grid">
+    <div class="hero-card" onclick="go('s-code')">
+      <div class="hc-icon">💻</div>
+      <div class="hc-name">Claude Code</div>
+      <div class="hc-desc">CLIツール・開発者向け</div>
+    </div>
+    <div class="hero-card" onclick="go('s-cowork')">
+      <div class="hc-icon">🖥️</div>
+      <div class="hc-name">Claude Cowork</div>
+      <div class="hc-desc">デスクトップ・業務向け</div>
+    </div>
+  </div>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
+    <button class="btn" onclick="go('s-basics')">Chapter 1 から始める →</button>
+    <button class="btn btn-ghost" onclick="go('s-cheat')">チートシートだけ見る</button>
+  </div>
+  <div style="margin-top:24px; display:flex; gap:24px; font-size:13px; color:#888;">
+    <span>📖 7チャプター</span>
+    <span>💡 30以上のプロンプト例</span>
+    <span>✅ 理解度クイズ付き</span>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════ CH1: BASICS ══════════════════════════════════ -->
+<section class="page" id="s-basics" style="border-top:1px solid #e5e5e5; background:#fff;">
+<div class="inner">
+  <div class="ch-num">Chapter 1</div>
+  <h2>Claudeの基礎知識</h2>
+  <p class="ch-desc">まずClaude全体の仕組みと、2つのツールがどう位置づけられるかを理解します。土台を固めることで、後の学習がスムーズになります。</p>
+
+  <!-- Lesson 1-1 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">1</div>
+      <div class="lesson-title">Claudeとは何か</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>ClaudeはAnthropicが開発した大規模言語モデル（LLM）をベースにしたAIアシスタントです。「会話」という形式で自然言語の指示を理解し、テキスト生成・コード記述・データ分析・ファイル操作などを行います。</p>
+      <p>重要なのは、ClaudeはWebブラウザから使う<strong>claude.ai</strong>だけではなく、複数のインターフェースで利用できるという点です。</p>
+      <table class="ctable">
+        <tr><th>インターフェース</th><th>対象</th><th>特徴</th></tr>
+        <tr><td>claude.ai（Web）</td><td>一般ユーザー</td><td>ブラウザで使えるチャット。最も手軽。</td></tr>
+        <tr><td>Claude Code</td><td>開発者</td><td>ターミナルから使うCLI。コードベースを直接操作できる。</td></tr>
+        <tr><td>Claude Cowork</td><td>ビジネスパーソン</td><td>デスクトップアプリ。ファイル操作・業務自動化に特化。</td></tr>
+        <tr><td>API</td><td>開発者・企業</td><td>自社サービスにClaudeを組み込む。</td></tr>
+      </table>
+      <div class="callout tip"><div class="callout-icon">💡</div><p><strong>ポイント：</strong>どのインターフェースを使っても、中身は同じClaudeモデルです。違いは「何ができるか・何にアクセスできるか」というツールの差です。</p></div>
+    </div>
+  </div>
+
+  <!-- Lesson 1-2 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">2</div>
+      <div class="lesson-title">Claude Code vs Cowork — 何が違うのか</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>2つのツールは「電車とバス」の関係に似ています。どちらも目的地（タスクの完了）に連れて行ってくれますが、得意なルートがまったく異なります。</p>
+      <table class="ctable">
+        <tr><th></th><th>💻 Claude Code</th><th>🖥️ Claude Cowork</th></tr>
+        <tr><td><strong>操作方法</strong></td><td>ターミナル（CLI）</td><td>デスクトップアプリ（GUI）</td></tr>
+        <tr><td><strong>主な対象</strong></td><td>開発者・エンジニア</td><td>ビジネスパーソン全般</td></tr>
+        <tr><td><strong>得意なこと</strong></td><td>コード生成・デバッグ・リファクタ・スクリプト実行</td><td>ファイル処理・レポート作成・定期タスク・データ集計</td></tr>
+        <tr><td><strong>コードの知識</strong></td><td>あると有利（必須ではない）</td><td>不要</td></tr>
+        <tr><td><strong>ファイルアクセス</strong></td><td>カレントディレクトリ以下</td><td>選択したフォルダ</td></tr>
+        <tr><td><strong>外部連携</strong></td><td>MCPプラグイン</td><td>MCPプラグイン・スケジューラ</td></tr>
+      </table>
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p><strong>MCP（Model Context Protocol）</strong>とは、ClaudeがSlack・Gmail・Notionなど外部ツールと連携するための拡張機能です。両ツール共通でプラグインとして追加できます。</p></div>
+    </div>
+  </div>
+
+  <!-- Lesson 1-3: Decision -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">3</div>
+      <div class="lesson-title">どっちを使うか判断する</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>迷ったときは「ターミナルで作業するか・しないか」を軸に考えると判断しやすいです。以下でシナリオを選んで確認してみましょう。</p>
+      <div class="decision">
+        <div class="d-q">シナリオを選んでください：</div>
+        <div class="d-btns">
+          <button class="dbtn" onclick="dt('code','Pythonスクリプトを書きたい','CLI経由でファイルを直接作成・実行できる Claude Code が最適です。「売上CSVを集計するスクリプトを書いて」のように伝えるだけで、コードの生成から実行確認まで行えます。')">Pythonスクリプトを書きたい</button>
+          <button class="dbtn" onclick="dt('cowork','議事録をWord形式でまとめたい','ファイルをD&Dで渡してWord出力できる Cowork が最適です。「会議録音.txtを読んで、アクションアイテム付きの議事録をWordで作って」と伝えるだけです。')">議事録をWordでまとめたい</button>
+          <button class="dbtn" onclick="dt('code','既存コードのバグを修正したい','コードベースを丸ごと読んでバグを特定・修正できる Claude Code が最適です。エラーメッセージをそのまま貼り付けるだけでOKです。')">既存コードのバグを直したい</button>
+          <button class="dbtn" onclick="dt('cowork','月次レポートを自動生成したい','スケジュール機能を使って毎月自動実行できる Cowork が最適です。一度設定すれば、毎月1日にデータを読んでレポートを生成できます。')">月次レポートを自動化したい</button>
+          <button class="dbtn" onclick="dt('code','APIエンドポイントを新規追加したい','ルーティング・コントローラー・テストコードまで一気通貫で作れる Claude Code が最適です。既存の設計パターンを学習した上で、一貫性のあるコードを生成します。')">APIを新規追加したい</button>
+          <button class="dbtn" onclick="dt('cowork','大量のPDFからデータを抽出したい','複数ファイルを一括処理してExcelにまとめられる Cowork が最適です。フォルダを渡して「全PDFから社名・金額・日付を抜き出してExcelに整理して」と指示できます。')">PDFからデータを抽出したい</button>
+          <button class="dbtn" onclick="dt('code','テストコードを書きたい','既存の実装コードを読んだ上でテストを書いてくれる Claude Code が最適です。カバレッジの高いユニットテストを自動生成できます。')">テストコードを書きたい</button>
+          <button class="dbtn" onclick="dt('cowork','Slackに定期レポートを投稿したい','SlackのMCPプラグインと連携できる Cowork が最適です。スケジュール機能と組み合わせて、毎週月曜に自動投稿する仕組みが作れます。')">Slackに定期レポートを送りたい</button>
+        </div>
+        <div class="d-result" id="d-result">
+          <strong id="d-tool" style="font-size:15px;"></strong>
+          <div id="d-reason" style="margin-top:6px; color:#555;"></div>
+          <button onclick="document.getElementById('d-result').style.display='none'">← 別のシナリオを試す</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ══════════════════════════════════ CH2: CLAUDE CODE ══════════════════════════════════ -->
+<section class="page" id="s-code" style="border-top:1px solid #e5e5e5;">
+<div class="inner">
+  <div class="ch-num">Chapter 2</div>
+  <h2>Claude Code 入門</h2>
+  <p class="ch-desc">ターミナルから呼び出すAIアシスタント。コードベース全体を把握した上でコーディング・デバッグ・リファクタリングをサポートします。</p>
+
+  <!-- Lesson 2-1 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">1</div>
+      <div class="lesson-title">なぜClaude Codeが強力なのか</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>通常のclaude.aiにコードを貼り付けて質問する方法との決定的な違いは、<strong>「プロジェクト全体を文脈として持てる」</strong>点です。</p>
+      <ul>
+        <li>起動時にカレントディレクトリのファイル一覧を自動で読み込む</li>
+        <li>「このファイルを見て」と言わなくても、関連ファイルを自動で参照する</li>
+        <li>コードを書くだけでなく、実際にファイルを編集・作成・削除できる</li>
+        <li>ターミナルコマンドを実行して結果を確認した上で次の行動をとれる</li>
+        <li>GitのステータスやPRの差分を理解した上でコミットメッセージを書ける</li>
+      </ul>
+      <div class="callout tip"><div class="callout-icon">💡</div><p>レシピ本（コードの知識）なしで料理（開発）を注文できる、専属シェフのようなイメージです。「どんな材料があるか」を自分で確認した上で、最適な料理を作ってくれます。</p></div>
+    </div>
+  </div>
+
+  <!-- Lesson 2-2 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">2</div>
+      <div class="lesson-title">セットアップ手順</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <div class="steps">
+        <div class="step">
+          <div class="step-n">1</div>
+          <div class="step-b">
+            <h4>Node.js v18以上を確認する</h4>
+            <p>Claude CodeはNode.jsランタイム上で動作します。ターミナル（Mac）またはコマンドプロンプト / PowerShell（Windows）でバージョンを確認してください。</p>
+            <div class="os-block">
+              <div class="os-switcher">
+                <button class="os-btn on" onclick="osSwitch(this,'step1','mac')">🍎 Mac / Linux</button>
+                <button class="os-btn" onclick="osSwitch(this,'step1','win')">🪟 Windows</button>
+              </div>
+              <div id="step1-mac" class="os-panel on">
+                <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="g">$</span> node --version<br><span class="dim">v20.11.0  ← v18以上であればOK</span></div>
+              </div>
+              <div id="step1-win" class="os-panel">
+                <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="g">></span> node --version<br><span class="dim">v20.11.0  ← v18以上であればOK</span></div>
+              </div>
+            </div>
+            <div class="callout warn"><div class="callout-icon">⚠️</div><p>v18未満の場合は <a href="https://nodejs.org" target="_blank">nodejs.org</a> からLTS版をインストールしてください。Windowsの場合は .msi インストーラーが簡単です。</p></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n">2</div>
+          <div class="step-b">
+            <h4>npmでインストールする</h4>
+            <div class="os-block">
+              <div class="os-switcher">
+                <button class="os-btn on" onclick="osSwitch(this,'step2','mac')">🍎 Mac / Linux</button>
+                <button class="os-btn" onclick="osSwitch(this,'step2','win')">🪟 Windows</button>
+              </div>
+              <div id="step2-mac" class="os-panel on">
+                <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="g">$</span> npm install -g @anthropic-ai/claude-code</div>
+                <p style="margin-top:8px;">permission エラーが出る場合（Mac）：</p>
+                <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="g">$</span> sudo npm install -g @anthropic-ai/claude-code</div>
+              </div>
+              <div id="step2-win" class="os-panel">
+                <p style="margin-bottom:6px;">PowerShell を<strong>管理者として実行</strong>してからインストールしてください。</p>
+                <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="g">></span> npm install -g @anthropic-ai/claude-code</div>
+                <div class="callout info" style="margin-top:8px;"><div class="callout-icon">ℹ️</div><p>スタートメニューで「PowerShell」を右クリック→「管理者として実行」で起動できます。</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n">3</div>
+          <div class="step-b">
+            <h4>初回起動とサインイン</h4>
+            <p>claudeコマンドを実行するとブラウザが開きます。Anthropicアカウントでサインイン後、ターミナルに戻ると使い始められます。コマンドはMac・Windows共通です。</p>
+            <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="g">$</span> claude<br><span class="dim">Opening browser for authentication...</span><br><span class="g">✓ Authenticated successfully</span><br><span class="dim">Welcome to Claude Code! Type your message below.</span></div>
+            <div class="callout info"><div class="callout-icon">ℹ️</div><p><strong>Windowsの場合：</strong> ブラウザが自動で開かない場合は、ターミナルに表示されたURLをコピーしてブラウザに貼り付けてください。</p></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n">4</div>
+          <div class="step-b">
+            <h4>プロジェクトフォルダで起動する</h4>
+            <p>必ず<strong>作業したいプロジェクトのフォルダ内</strong>でclaudeを起動してください。パスの書き方だけMac/Windowsで異なります。</p>
+            <div class="os-block">
+              <div class="os-switcher">
+                <button class="os-btn on" onclick="osSwitch(this,'step4','mac')">🍎 Mac / Linux</button>
+                <button class="os-btn" onclick="osSwitch(this,'step4','win')">🪟 Windows</button>
+              </div>
+              <div id="step4-mac" class="os-panel on">
+                <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="g">$</span> cd /Users/yourname/projects/my-project<br><span class="g">$</span> claude<br><span class="dim">✓ Context loaded: 47 files across 12 directories</span></div>
+              </div>
+              <div id="step4-win" class="os-panel">
+                <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="g">></span> cd C:\Users\yourname\projects\my-project<br><span class="g">></span> claude<br><span class="dim">✓ Context loaded: 47 files across 12 directories</span></div>
+                <div class="callout tip" style="margin-top:8px;"><div class="callout-icon">💡</div><p>エクスプローラーでフォルダを開いてアドレスバーに <code>cmd</code> と入力してEnterを押すと、そのフォルダでコマンドプロンプトが開きます。</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lesson 2-3 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">3</div>
+      <div class="lesson-title">基本的な使い方 — 4つのパターン</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <div class="tabs">
+        <button class="tbtn on" onclick="T('cc','debug',this)">バグ修正</button>
+        <button class="tbtn" onclick="T('cc','write',this)">コード生成</button>
+        <button class="tbtn" onclick="T('cc','explain',this)">コード理解</button>
+        <button class="tbtn" onclick="T('cc','refactor',this)">リファクタ</button>
+      </div>
+      <div id="cc-debug" class="tcnt on">
+        <p>エラーメッセージをそのまま貼り付けるのが最速です。「このエラーを直して」だけで、関連ファイルを自動で調査して修正してくれます。</p>
+        <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="y">You:</span> <span class="w">以下のエラーが発生しています。修正してください。</span><br><br><span class="r">TypeError: Cannot read properties of undefined (reading 'map')</span><br><span class="r">    at UserList (src/components/UserList.tsx:45:22)</span><br><span class="r">    at renderWithHooks (react-dom/cjs/react-dom.development.js:14985:18)</span><br><br><span class="dim">Claude: UserList.tsx を確認します...</span><br><span class="dim">原因: props.users が undefined のタイミングで map() が呼ばれています。</span><br><span class="dim">オプショナルチェーン（?.）とデフォルト値で修正します。</span><br><br><span class="dim">// Before</span><br><span class="b">const items = props.users.map(u => ...)</span><br><span class="dim">// After</span><br><span class="g">const items = (props.users ?? []).map(u => ...)</span></div>
+        <div class="callout tip"><div class="callout-icon">💡</div><p>スタックトレース（エラーの発生箇所の一覧）を含めると、より正確に問題を特定できます。</p></div>
+      </div>
+      <div id="cc-write" class="tcnt">
+        <p>何を作りたいかを日本語で説明するだけでOKです。既存のコードスタイルや命名規則を自動で学習した上でコードを生成します。</p>
+        <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="y">You:</span> <span class="w">CSVファイルを読み込んで売上データを月別・カテゴリ別に集計し、</span><br><span class="w">Excelファイルとして出力するPythonスクリプトを作ってください。</span><br><span class="w">- 入力: sales.csv（date, category, amount列）</span><br><span class="w">- 出力: report_YYYYMM.xlsx（ピボットテーブル形式・グラフ付き）</span><br><span class="w">- ライブラリ: pandas, openpyxl</span><br><br><span class="dim">Claude: analyze_sales.py を作成しました。</span><br><span class="g">実行: python analyze_sales.py sales.csv</span></div>
+        <div class="callout tip"><div class="callout-icon">💡</div><p>入力・出力・使用ライブラリを明示すると、意図通りのコードが一発で出やすくなります。</p></div>
+      </div>
+      <div id="cc-explain" class="tcnt">
+        <p>引き継いだコードや、読み解けないコードを日本語で説明してもらえます。「このファイル全体」でも「この関数だけ」でも指定できます。</p>
+        <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="y">You:</span> <span class="w">src/auth/middleware.js を見て、以下を日本語で説明してください。</span><br><span class="w">1. このファイル全体の役割</span><br><span class="w">2. JWT検証の仕組み（行番号付きで）</span><br><span class="w">3. セキュリティ上の注意点があれば指摘して</span><br><br><span class="dim">Claude: middleware.js の解説</span><br><span class="dim">役割: リクエストのたびにJWTトークンを検証する認証ミドルウェアです。</span><br><span class="dim">処理フロー: Authorization ヘッダーからトークンを取り出し → ...</span></div>
+      </div>
+      <div id="cc-refactor" class="tcnt">
+        <p>コードの品質改善を任せられます。リファクタリングの方針（DRY・SOLID・可読性向上など）を指定するとより的確な提案が返ってきます。</p>
+        <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="y">You:</span> <span class="w">utils/helpers.js を以下の方針でリファクタリングしてください。</span><br><span class="w">- DRY原則：重複している処理を共通関数に切り出す</span><br><span class="w">- 可読性：関数名・変数名を意図が伝わる名前に変更</span><br><span class="w">- 副作用：グローバル変数への依存を排除する</span><br><span class="w">変更前後の差分がわかるようにコメントを残してください。</span><br><br><span class="dim">Claude: 3つの重複処理を発見しました。formatDate() に共通化します...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lesson 2-4 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">4</div>
+      <div class="lesson-title">コマンドリファレンス</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p style="font-size:13px; color:#888; margin-bottom:14px;">※ <code>claude</code> コマンド自体はMac・Windows共通です。ターミナル（Mac: Terminal / Windows: コマンドプロンプト or PowerShell）から実行してください。</p>
+      <div class="kv">
+        <span class="k">claude</span><span class="v">対話モードで起動（最も基本的な使い方）</span>
+        <span class="k">claude "質問"</span><span class="v">1回だけ質問して自動終了。スクリプトからの呼び出しに便利</span>
+        <span class="k">claude --resume</span><span class="v">直前の会話セッションを再開する</span>
+        <span class="k">claude -p "質問"</span><span class="v">パイプ入力と組み合わせて使う非対話モード</span>
+        <span class="k">/clear</span><span class="v">会話履歴をリセット。コンテキストが複雑になったときに使う</span>
+        <span class="k">/help</span><span class="v">利用可能なコマンドの一覧を表示</span>
+        <span class="k">/model</span><span class="v">使用するモデルを切り替える（例: /model opus）</span>
+        <span class="k">/cost</span><span class="v">このセッションで使用したトークン数とコストを表示</span>
+        <span class="k">/review</span><span class="v">最後にClaudeが行った変更のdiffを表示して確認</span>
+        <span class="k">Ctrl+C</span><span class="v">実行中の処理を中断する（Mac・Windows共通）</span>
+        <span class="k">↑ / ↓</span><span class="v">入力履歴を呼び出す（Mac: Terminal / Windows: cmd・PowerShell共通）</span>
+      </div>
+
+      <h4 style="margin-top:20px; margin-bottom:12px;">ターミナルの開き方</h4>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="card" style="padding:16px;">
+          <div style="font-size:13px; font-weight:700; margin-bottom:10px;">🍎 Mac</div>
+          <ul style="font-size:13px; color:#555;">
+            <li style="padding:3px 0;">Spotlight（⌘+Space）→「Terminal」と入力</li>
+            <li style="padding:3px 0;">Finder → アプリケーション → ユーティリティ → Terminal</li>
+            <li style="padding:3px 0;">iTerm2（無料）を使うとより快適</li>
+          </ul>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div style="font-size:13px; font-weight:700; margin-bottom:10px;">🪟 Windows</div>
+          <ul style="font-size:13px; color:#555;">
+            <li style="padding:3px 0;">スタート → 「PowerShell」と検索（推奨）</li>
+            <li style="padding:3px 0;">スタート → 「cmd」→ コマンドプロンプト</li>
+            <li style="padding:3px 0;">Windows Terminal（Microsoft Store）を使うとより快適</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout info" style="margin-top:14px;"><div class="callout-icon">ℹ️</div><p><strong>/model の使い分け：</strong>複雑な設計・アーキテクチャ相談には <code>opus</code>、日常的なコーディング補助には <code>sonnet</code>（デフォルト）、軽い質問には <code>haiku</code> が費用対効果が高いです。</p></div>
+    </div>
+  </div>
+
+  <!-- Lesson 2-5 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">5</div>
+      <div class="lesson-title">実際の開発フロー例</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>新機能「ユーザー検索API」を追加するシナリオで、Claude Codeとの実際のやり取りを追ってみましょう。</p>
+      <div class="flow">
+        <span class="flow-node">要件を伝える</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node">設計の相談</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node">コード生成</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node">テスト作成</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node">コミット</span>
+      </div>
+      <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="dim"># Step1: 要件を伝えてコードベースを分析させる</span><br><span class="y">You:</span> <span class="w">GET /api/users/search?q= でユーザーを名前・メールで検索する</span><br><span class="w">APIエンドポイントを追加したいです。既存のコード構造を確認した上で</span><br><span class="w">実装計画を提案してください。</span><br><br><span class="dim">Claude: 既存のルーティング（routes/users.js）と</span><br><span class="dim">UserControllerの構造を確認しました。以下の方針で実装します...</span><br><br><span class="dim"># Step2: 実装を依頼する</span><br><span class="y">You:</span> <span class="w">その計画で実装してください。バリデーションとエラーハンドリングも含めて。</span><br><br><span class="dim"># Step3: テストを依頼する</span><br><span class="y">You:</span> <span class="w">既存のテストパターンに合わせて、この変更のユニットテストを作成してください。</span><br><br><span class="dim"># Step4: コミットメッセージを依頼する</span><br><span class="y">You:</span> <span class="w">今回の変更に対して適切なgitコミットメッセージを提案してください。</span></div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ══════════════════════════════════ CH3: COWORK ══════════════════════════════════ -->
+<section class="page" id="s-cowork" style="border-top:1px solid #e5e5e5; background:#fff;">
+<div class="inner">
+  <div class="ch-num">Chapter 3</div>
+  <h2>Claude Cowork 入門</h2>
+  <p class="ch-desc">GUIで動くデスクトップアシスタント。コードの知識がなくてもファイルを渡して「やって」と言えば業務タスクを実行してくれます。</p>
+
+  <!-- Lesson 3-1 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">1</div>
+      <div class="lesson-title">Coworkの強みを理解する</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>claude.aiのWebチャットとCoworkの最大の違いは、<strong>「自分のPCのファイルに直接アクセスできる」</strong>点です。ファイルをアップロードする手間なく、フォルダをまるごと作業スペースとして指定できます。</p>
+      <ul>
+        <li>指定フォルダ内のファイルを自由に読み書き・整理できる</li>
+        <li>ExcelやWord・PDFなど複数ファイルを一括処理できる</li>
+        <li>定期タスクをスケジュール設定して、自動実行できる</li>
+        <li>MCPプラグインでSlack・Gmail・Googleカレンダー等と連携できる</li>
+        <li>処理結果をそのまま指定フォルダに保存できる</li>
+      </ul>
+      <div class="callout tip"><div class="callout-icon">💡</div><p>ファイル整理・データ集計・レポート作成など、<strong>毎月同じ手作業を繰り返しているルーティン業務</strong>こそCoworkが最も効果を発揮する領域です。</p></div>
+    </div>
+  </div>
+
+  <!-- Lesson 3-2 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">2</div>
+      <div class="lesson-title">初回セットアップ</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <div class="steps">
+        <div class="step">
+          <div class="step-n">1</div>
+          <div class="step-b">
+            <h4>Claude for Desktopをインストール</h4>
+            <p>Anthropicの公式サイト（<a href="https://claude.ai/download" target="_blank">claude.ai/download</a>）からMac/Windowsアプリをダウンロード・インストールします。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n">2</div>
+          <div class="step-b">
+            <h4>Claude.aiアカウントでサインイン</h4>
+            <p>アプリを起動してAnthropicアカウントにサインインします。Pro以上のプランが必要です。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n">3</div>
+          <div class="step-b">
+            <h4>Coworkモードを選択する</h4>
+            <p>画面上部のモード切り替えから「Cowork」を選択します。通常のチャットよりも多くのツール（ファイル操作・スケジュール）が解放されます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-n">4</div>
+          <div class="step-b">
+            <h4>作業フォルダを選択する</h4>
+            <p>「フォルダを選択」から、Claudeに作業させたいフォルダを指定します。これがClaudeの「作業デスク」になります。フォルダ内のファイルをClaudeが読み書きできるようになります。</p>
+            <div class="callout warn"><div class="callout-icon">⚠️</div><p>重要なファイルが入ったフォルダを指定する場合は、事前にバックアップを取っておきましょう。Claudeはファイルの削除・上書きも実行できます。</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lesson 3-3 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">3</div>
+      <div class="lesson-title">実践ユースケース集</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <div class="tabs">
+        <button class="tbtn on" onclick="T('wc','report',this)">レポート作成</button>
+        <button class="tbtn" onclick="T('wc','data',this)">データ分析</button>
+        <button class="tbtn" onclick="T('wc','files',this)">ファイル整理</button>
+        <button class="tbtn" onclick="T('wc','sched',this)">スケジュール</button>
+      </div>
+      <div id="wc-report" class="tcnt on">
+        <h4>月次マーケティングレポートの自動生成</h4>
+        <p>複数のデータファイルを読み込んで、役員向けレポートをWord形式で作成します。</p>
+        <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="y">You:</span> <span class="w">analytics_oct.csv と sns_report.xlsx を読んで、</span><br><span class="w">以下の内容を含む月次レポートをWord形式で作成してください。</span><br><br><span class="w">【構成】</span><br><span class="w">1. エグゼクティブサマリー（3点・200字以内）</span><br><span class="w">2. KPIダッシュボード（PV・CVR・CPA・ROAS、前月比付き）</span><br><span class="w">3. チャネル別パフォーマンス分析</span><br><span class="w">4. 課題と来月の推奨アクション（3点）</span><br><br><span class="w">トーン：役員向けの簡潔なビジネス文書</span><br><span class="w">ファイル名：monthly_report_202410.docx</span></div>
+        <div class="callout tip"><div class="callout-icon">💡</div><p>ファイル名まで指定しておくと、そのまま指定フォルダに保存してくれます。毎月同じ指示を再利用して自動化するのがおすすめです。</p></div>
+      </div>
+      <div id="wc-data" class="tcnt">
+        <h4>アンケートデータの分析・可視化</h4>
+        <p>数百行のアンケート結果からインサイトを抽出し、Excelで出力します。</p>
+        <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="y">You:</span> <span class="w">customer_survey_q3.xlsx のアンケートデータを以下の通り分析してください。</span><br><br><span class="w">【分析内容】</span><br><span class="w">1. NPS（ネットプロモータースコア）を計算する</span><br><span class="w">   - プロモーター(9-10)/パッシブ(7-8)/デトラクター(0-6)に分類</span><br><span class="w">2. 自由記述の否定的コメントを感情分析して上位5パターンに分類</span><br><span class="w">3. 属性別（年齢・利用頻度）のスコア差を分析する</span><br><br><span class="w">【出力】</span><br><span class="w">- survey_analysis.xlsx（分析結果＋グラフ3枚）</span><br><span class="w">- summary.md（経営層向け3行サマリー）</span></div>
+      </div>
+      <div id="wc-files" class="tcnt">
+        <h4>大量ファイルの整理・命名規則統一</h4>
+        <p>散乱したファイルを内容に基づいて自動分類・リネームします。</p>
+        <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="y">You:</span> <span class="w">downloads/ フォルダ内の全PDFを以下のルールで整理してください。</span><br><br><span class="w">【分類ルール】（内容を読んで判断）</span><br><span class="w">・契約書・発注書 → /docs/contracts/</span><br><span class="w">・請求書・領収書 → /docs/invoices/</span><br><span class="w">・報告書・提案書 → /docs/reports/</span><br><span class="w">・その他 → /docs/misc/</span><br><br><span class="w">【命名規則】</span><br><span class="w">YYYYMMDD_取引先名_書類種別.pdf</span><br><span class="w">（例: 20241001_株式会社ABC_請求書.pdf）</span><br><br><span class="w">処理前に変更内容の一覧を確認させてください。</span></div>
+        <div class="callout tip"><div class="callout-icon">💡</div><p>「処理前に変更内容を確認させてください」と書くと、実際に移動する前に一覧を見せてくれます。誤操作防止として推奨します。</p></div>
+      </div>
+      <div id="wc-sched" class="tcnt">
+        <h4>定期タスクの自動化</h4>
+        <p>一度設定すれば、毎日・毎週自動でタスクを実行します。</p>
+        <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="y">You:</span> <span class="w">以下の定期タスクを設定してください。</span><br><br><span class="w">【タスク1: 週次レポート】</span><br><span class="w">毎週月曜 8:00 に</span><br><span class="w">→ sales_data/ の先週分CSVを読んで週次サマリーを作成</span><br><span class="w">→ reports/weekly/ に YYYYMMDD_weekly.xlsx として保存</span><br><br><span class="w">【タスク2: 日次バックアップ確認】</span><br><span class="w">毎日 22:00 に</span><br><span class="w">→ backup/ フォルダに今日の日付フォルダがあるか確認</span><br><span class="w">→ なければ alerts/backup_missing_YYYYMMDD.txt を作成</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lesson 3-4 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">4</div>
+      <div class="lesson-title">MCPプラグインで外部ツールと連携する</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>MCP（Model Context Protocol）プラグインを追加することで、ClaudeがSlack・Gmail・Googleカレンダーなどと直接やり取りできるようになります。</p>
+      <table class="ctable">
+        <tr><th>プラグイン</th><th>できること</th></tr>
+        <tr><td>Slack</td><td>チャンネルを読む・メッセージを送る・スレッドを要約する</td></tr>
+        <tr><td>Gmail</td><td>メールを検索・要約・返信下書きを作成する</td></tr>
+        <tr><td>Googleカレンダー</td><td>予定の確認・作成・空き時間の検索</td></tr>
+        <tr><td>Notion</td><td>ページの読み込み・新規作成・データベース操作</td></tr>
+        <tr><td>GitHub</td><td>PR確認・Issue管理・コードレビューのサポート</td></tr>
+      </table>
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p>プラグインの追加はCoworkの設定画面から行います。インストール後は「今日のSlackで未読のメンションをまとめて」「明日の予定を確認して」のように自然な言葉で使えます。</p></div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ══════════════════════════════════ CH4: PROMPTS ══════════════════════════════════ -->
+<section class="page" id="s-prompt" style="border-top:1px solid #e5e5e5;">
+<div class="inner">
+  <div class="ch-num">Chapter 4</div>
+  <h2>プロンプトエンジニアリング</h2>
+  <p class="ch-desc">Claudeへの指示は「設計図」です。曖昧な設計図からは意図通りのものは作れません。5つのテクニックで出力品質を劇的に上げましょう。</p>
+
+  <!-- Lesson 4-1 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">1</div>
+      <div class="lesson-title">テクニック①：出力形式を明示する</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>「何を」だけでなく「どんな形で」出力してほしいかを常に書きましょう。フォーマット・長さ・トーンの3つが重要です。</p>
+      <div class="tip-pair">
+        <div class="tip bad"><div class="tlbl">❌ 曖昧</div>「レポートを作って」</div>
+        <div class="tip good"><div class="tlbl">✅ 具体的</div>「10月の売上データをもとに<strong>Word形式</strong>でレポートを作って。構成はKPIサマリー・前月比・来月の推奨アクション3点。<strong>役員向けの簡潔なビジネス文書</strong>で、全体<strong>800字以内</strong>。」</div>
+      </div>
+      <div class="tip-pair">
+        <div class="tip bad"><div class="tlbl">❌ 曖昧</div>「メールを書いて」</div>
+        <div class="tip good"><div class="tlbl">✅ 具体的</div>「新規BtoB顧客Aさんへの初回提案メールを<strong>件名＋本文</strong>で書いて。本文<strong>400字以内</strong>・<strong>ビジネス敬語</strong>・訴求点はサポート体制とオンボーディングの手厚さで。」</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lesson 4-2 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">2</div>
+      <div class="lesson-title">テクニック②：役割を与える</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>プロンプトの冒頭で「あなたは〜です」と役割を定義すると、その専門家の視点から回答してくれます。専門的な出力が必要なときに特に効果的です。</p>
+      <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="dim"># 役割を与えない場合</span><br><span class="y">「競合分析をしてください」</span><br><span class="dim">→ 一般的な情報をまとめた回答になりがち</span><br><br><span class="dim"># 役割を与えた場合</span><br><span class="y">「あなたはBtoB SaaS業界で10年の経験を持つ</span><br><span class="y">戦略コンサルタントです。以下の競合分析をしてください...」</span><br><span class="dim">→ 業界固有の視点・フレームワークを使った深い分析になる</span></div>
+    </div>
+  </div>
+
+  <!-- Lesson 4-3 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">3</div>
+      <div class="lesson-title">テクニック③：例を見せる（Few-shot）</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>期待する出力の例を1〜3つ見せると、パターンを学習してくれます。フォーマットが決まっている繰り返し作業に特に有効です。</p>
+      <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="y">以下のフォーマットで、商品説明文を10件作成してください。</span><br><br><span class="dim">【例】</span><br><span class="y">商品名: プレミアムコーヒーメーカー</span><br><span class="y">説明: 豆の旨みを最大限に引き出す98℃抽出で、</span><br><span class="y">カフェの味をそのまま自宅に。忙しい朝も1分でセット完了。</span><br><br><span class="dim">【処理対象リスト】</span><br><span class="y">1. ワイヤレスイヤホン</span><br><span class="y">2. スマートウォッチ</span><br><span class="y">...</span></div>
+    </div>
+  </div>
+
+  <!-- Lesson 4-4 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">4</div>
+      <div class="lesson-title">テクニック④：NG条件を伝える</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>「〜はしないで」という除外条件を書くことで、不要な出力を防げます。Claudeは良かれと思って余計な説明を加えることがあるので、NGを明示するのは効果的です。</p>
+      <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="dim"># よく使うNG条件の例</span><br><span class="y">「説明は不要です。コードだけ出力してください。」</span><br><span class="y">「箇条書きは使わず、流れるような文章で書いてください。」</span><br><span class="y">「前置きなしに本文から書き始めてください。」</span><br><span class="y">「既存のコードを削除・変更せず、追加のみ行ってください。」</span><br><span class="y">「推測で補完せず、不明な点は質問してください。」</span></div>
+    </div>
+  </div>
+
+  <!-- Lesson 4-5 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">5</div>
+      <div class="lesson-title">テクニック⑤：段階的に依頼する（Chain-of-thought）</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>複雑なタスクを一度に全部頼むより、「まずアウトラインを作って → 確認 → 肉付け」と段階的に進める方が質が上がります。途中で方向修正もできます。</p>
+      <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="dim"># Stage 1: 構成を確認してから進める</span><br><span class="y">You:</span> <span class="w">製品ランディングページのコピーを書きたいです。</span><br><span class="w">まず構成案（見出しのみ）を3パターン提案してください。</span><br><br><span class="dim">Claude: 【案A】共感型 / 【案B】課題解決型 / 【案C】実績訴求型 ...</span><br><br><span class="dim"># Stage 2: 選択して詳細化</span><br><span class="y">You:</span> <span class="w">案Bで進めてください。各セクションのコピーを書いてください。</span><br><br><span class="dim"># Stage 3: 微調整</span><br><span class="y">You:</span> <span class="w">ファーストビューの見出しをもっとインパクトのある表現に変えてください。</span><br><span class="w">候補を3つ出してください。</span></div>
+      <div class="callout tip"><div class="callout-icon">💡</div><p>一度のプロンプトに全てを詰め込もうとするのは「ゴールを指定して地図を渡さず旅に出す」ようなものです。段階的な対話がより良いアウトカムにつながります。</p></div>
+    </div>
+  </div>
+
+  <!-- 黄金フォーマット -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">6</div>
+      <div class="lesson-title">黄金フォーマット — テンプレートをそのまま使う</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>5つのテクニックをまとめたテンプレートです。コピーして自分のタスクに合わせて書き換えてください。</p>
+      <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="dim">## 役割（任意・専門性が必要なとき）</span><br><span class="w">あなたは[役割・専門性]です。</span><br><br><span class="dim">## タスク（必須）</span><br><span class="w">[具体的に何をしてほしいか]</span><br><br><span class="dim">## 入力情報（必須）</span><br><span class="w">・[データ/ファイル/背景情報]</span><br><span class="w">・[関連する制約・前提条件]</span><br><br><span class="dim">## 出力形式（必須）</span><br><span class="w">・形式: [Wordファイル/Excel/Markdown/コードのみ etc.]</span><br><span class="w">・長さ: [文字数・行数・ページ数]</span><br><span class="w">・トーン: [ビジネス敬語/カジュアル/技術的 etc.]</span><br><br><span class="dim">## NG事項（任意）</span><br><span class="w">・[してほしくないこと]</span><br><span class="w">・不明点があれば作業前に質問してください。</span></div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ══════════════════════════════════ CH5: WORKFLOW ══════════════════════════════════ -->
+<section class="page" id="s-workflow" style="border-top:1px solid #e5e5e5; background:#fff;">
+<div class="inner">
+  <div class="ch-num">Chapter 5</div>
+  <h2>実践ワークフロー</h2>
+  <p class="ch-desc">Claude CodeとCoworkを組み合わせた、IT企業での実際の活用シナリオです。どちらをいつ使うかの判断基準も身につけましょう。</p>
+
+  <!-- Lesson 5-1 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">1</div>
+      <div class="lesson-title">シナリオA：データパイプラインを構築して分析を自動化する</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>マーケターがGA4データを毎月自動で取得・集計・レポートするパイプラインを作るシナリオです。</p>
+      <div class="flow">
+        <span class="flow-node" style="background:#e8f4ff">Claude Code<br>スクリプト作成</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node">CSVデータ生成</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node" style="background:#f0fff4">Cowork<br>レポート作成</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-node">Word出力</span>
+      </div>
+      <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="dim"># Step1: Claude Code でGA4データ取得スクリプトを作る</span><br><span class="y">（Claude Codeで）</span><br><span class="w">GA4 API から先月分のセッション数・CVR・チャネル別データを取得して</span><br><span class="w">monthly_data_YYYYMM.csv に保存するPythonスクリプトを作ってください。</span><br><span class="w">認証はサービスアカウントJSONを使います。</span><br><br><span class="dim"># Step2: Cowork でレポートに仕上げる</span><br><span class="y">（Coworkで）</span><br><span class="w">monthly_data_202410.csv を読んで、経営層向けの月次レポートをWord形式で作って。</span><br><span class="w">グラフ付きで、前月比・3ヶ月トレンドも含めること。</span></div>
+    </div>
+  </div>
+
+  <!-- Lesson 5-2 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">2</div>
+      <div class="lesson-title">シナリオB：コードレビューとドキュメント整備</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <p>既存コードのレビューをClaude Codeで行い、そのドキュメントをCoworkで整備するシナリオです。</p>
+      <div class="code"><button class="cpbtn" onclick="cp(this)">copy</button><span class="dim"># Step1: Claude Code でコードレビューを実施</span><br><span class="y">（Claude Codeで）</span><br><span class="w">src/ 以下の全ファイルをレビューして、以下の観点で問題点を指摘してください。</span><br><span class="w">- セキュリティ上のリスク（SQLインジェクション・XSS・認証漏れ）</span><br><span class="w">- パフォーマンスのボトルネック</span><br><span class="w">- 保守性の低いコード（マジックナンバー・長すぎる関数）</span><br><span class="w">結果を review_result.md に保存してください。</span><br><br><span class="dim"># Step2: Cowork でドキュメントを整備</span><br><span class="y">（Coworkで）</span><br><span class="w">review_result.md を読んで、エンジニア向けの「コーディング規約.docx」を作成して。</span><br><span class="w">「やること」「やってはいけないこと」のコード例付きで整理してください。</span></div>
+    </div>
+  </div>
+
+  <!-- Lesson 5-3 -->
+  <div class="lesson">
+    <div class="lesson-header" onclick="toggleLesson(this)">
+      <div class="lesson-num">3</div>
+      <div class="lesson-title">使い分けの判断基準まとめ</div>
+      <div class="lesson-toggle">▼</div>
+    </div>
+    <div class="lesson-body open">
+      <table class="ctable">
+        <tr><th>やりたいこと</th><th>推奨ツール</th><th>理由</th></tr>
+        <tr><td>コードを書く・直す</td><td>💻 Claude Code</td><td>ファイルを直接編集できる</td></tr>
+        <tr><td>コマンドを実行する</td><td>💻 Claude Code</td><td>ターミナルと統合されている</td></tr>
+        <tr><td>GitのPR・コミットを扱う</td><td>💻 Claude Code</td><td>git操作をサポート</td></tr>
+        <tr><td>ExcelやWordを操作する</td><td>🖥️ Cowork</td><td>Office形式の出力に最適化</td></tr>
+        <tr><td>定期タスクを自動化する</td><td>🖥️ Cowork</td><td>スケジューラ機能がある</td></tr>
+        <tr><td>複数ファイルをまとめて処理</td><td>🖥️ Cowork</td><td>フォルダ単位で指定できる</td></tr>
+        <tr><td>Slack・Gmail等と連携する</td><td>🖥️ Cowork（またはCode）</td><td>どちらもMCP対応</td></tr>
+        <tr><td>コードの知識なしで使いたい</td><td>🖥️ Cowork</td><td>GUIで直感操作できる</td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ══════════════════════════════════ CH6: QUIZ ══════════════════════════════════ -->
+<section class="page" id="s-quiz" style="border-top:1px solid #e5e5e5;">
+<div class="inner">
+  <div class="ch-num">Chapter 6</div>
+  <h2>理解度チェック</h2>
+  <p class="ch-desc">全8問です。各問に解説付きです。</p>
+
+  <div class="qcard" id="q1">
+    <div class="qn">Q1 / 8</div>
+    <div class="qt">Claude Codeが通常のclaude.aiチャットよりも優れている点はどれ？</div>
+    <div class="opts">
+      <button class="opt" onclick="qa(this,'q1',false,'画像生成はClaudeの主機能ではありません。')">画像を生成できる</button>
+      <button class="opt" onclick="qa(this,'q1',true,'正解！Claude Codeはプロジェクトのファイル全体を自動で読み込み、コンテキストとして保持します。これにより「このバグを直して」だけで関連ファイルを自動調査できます。')">プロジェクト全体をコンテキストとして持てる</button>
+      <button class="opt" onclick="qa(this,'q1',false,'より賢いモデルが使われているわけではありません。同じClaudeモデルを使っています。')">より高性能なAIモデルを使っている</button>
+    </div>
+    <div class="qfb" id="fb-q1"></div>
+  </div>
+
+  <div class="qcard" id="q2">
+    <div class="qn">Q2 / 8</div>
+    <div class="qt">毎週月曜日に自動でレポートを生成・保存したい。最適なツールはどれ？</div>
+    <div class="opts">
+      <button class="opt" onclick="qa(this,'q2',false,'Claude Codeでもcronジョブと組み合わせれば自動化できますが、GUIで設定できるCoworkの方が非エンジニアには適しています。')">💻 Claude Code</button>
+      <button class="opt" onclick="qa(this,'q2',true,'正解！Coworkにはスケジューラ機能があり、GUI上で「毎週月曜8時に〜する」と設定するだけで自動実行できます。')">🖥️ Claude Cowork</button>
+    </div>
+    <div class="qfb" id="fb-q2"></div>
+  </div>
+
+  <div class="qcard" id="q3">
+    <div class="qn">Q3 / 8</div>
+    <div class="qt">プロンプトの品質を最も上げる要素はどれ？</div>
+    <div class="opts">
+      <button class="opt" onclick="qa(this,'q3',false,'英語で書く必要はありません。日本語で詳細を書く方が意図が正確に伝わります。')">英語で書く</button>
+      <button class="opt" onclick="qa(this,'q3',false,'長ければ良いわけではありません。冗長な指示より、具体的・構造的な指示の方が効果的です。')">できるだけ長く書く</button>
+      <button class="opt" onclick="qa(this,'q3',true,'正解！出力形式（ファイル形式・長さ・トーン・構成）を明示することで、Claudeが迷わず意図通りの出力を返せます。')">出力形式（形式・長さ・トーン）を明示する</button>
+    </div>
+    <div class="qfb" id="fb-q3"></div>
+  </div>
+
+  <div class="qcard" id="q4">
+    <div class="qn">Q4 / 8</div>
+    <div class="qt"><code>/clear</code> コマンドは何をする？</div>
+    <div class="opts">
+      <button class="opt" onclick="qa(this,'q4',false,'ファイル削除のコマンドではありません。ファイル操作はOSのコマンドかClaudeへの指示で行います。')">カレントディレクトリのファイルを削除する</button>
+      <button class="opt" onclick="qa(this,'q4',true,'正解！/clearは現在の会話コンテキストをリセットします。複数の異なるタスクを切り替えるときや、コンテキストが複雑になりすぎたときに使います。')">会話の履歴・コンテキストをリセットする</button>
+      <button class="opt" onclick="qa(this,'q4',false,'Claude Codeのキャッシュ管理コマンドではありません。')">Claudeのキャッシュをクリアする</button>
+    </div>
+    <div class="qfb" id="fb-q4"></div>
+  </div>
+
+  <div class="qcard" id="q5">
+    <div class="qn">Q5 / 8</div>
+    <div class="qt">Coworkでファイルを整理するとき、「処理前に変更内容を確認させてください」と書く理由は？</div>
+    <div class="opts">
+      <button class="opt" onclick="qa(this,'q5',false,'処理速度への影響ではありません。')">処理が速くなるから</button>
+      <button class="opt" onclick="qa(this,'q5',true,'正解！Claudeはファイルの移動・削除・リネームを実際に実行できます。確認ステップを挟むことで、意図しない変更を防ぐことができます。')">実際に移動・削除される前に内容を確認して誤操作を防ぐため</button>
+      <button class="opt" onclick="qa(this,'q5',false,'日本語対応はデフォルトで有効です。この確認文は関係ありません。')">日本語での出力を有効にするため</button>
+    </div>
+    <div class="qfb" id="fb-q5"></div>
+  </div>
+
+  <div class="qcard" id="q6">
+    <div class="qn">Q6 / 8</div>
+    <div class="qt">「Few-shot（フューショット）」プロンプティングとは何か？</div>
+    <div class="opts">
+      <button class="opt" onclick="qa(this,'q6',false,'Few-shotはモデルの選択とは無関係です。')">軽量なモデルを使うこと</button>
+      <button class="opt" onclick="qa(this,'q6',false,'会話を短くすることではありません。')">できるだけ短い会話で完結させること</button>
+      <button class="opt" onclick="qa(this,'q6',true,'正解！期待する入出力の例を1〜3つ見せることで、Claudeがパターンを学習します。フォーマットが決まっている繰り返し作業に特に効果的です。')">期待する出力の例をプロンプトに含めること</button>
+    </div>
+    <div class="qfb" id="fb-q6"></div>
+  </div>
+
+  <div class="qcard" id="q7">
+    <div class="qn">Q7 / 8</div>
+    <div class="qt">MCPプラグインとは何か？</div>
+    <div class="opts">
+      <button class="opt" onclick="qa(this,'q7',true,'正解！MCPはModel Context Protocolの略で、ClaudeがSlack・Gmail・Notionなど外部ツールと連携するための仕組みです。プラグインとして追加すると、「今日のSlackのメンションをまとめて」のような指示が使えるようになります。')">ClaudeがSlack・Gmailなど外部ツールと連携するための拡張機能</button>
+      <button class="opt" onclick="qa(this,'q7',false,'MCPはマルチモーダル（画像処理）の機能ではありません。')">Claudeに画像生成機能を追加するもの</button>
+      <button class="opt" onclick="qa(this,'q7',false,'MCPはモデルのアップデートの仕組みではありません。')">Claudeのモデルを自動アップデートする仕組み</button>
+    </div>
+    <div class="qfb" id="fb-q7"></div>
+  </div>
+
+  <div class="qcard" id="q8">
+    <div class="qn">Q8 / 8</div>
+    <div class="qt">複雑なタスクを依頼するとき、最も効果的なアプローチはどれ？</div>
+    <div class="opts">
+      <button class="opt" onclick="qa(this,'q8',false,'一度に全て詰め込むと、意図の伝達ミスが起きやすく、修正もしにくくなります。')">全ての要件を1つのプロンプトにまとめて一気に依頼する</button>
+      <button class="opt" onclick="qa(this,'q8',false,'英語に翻訳する必要はありません。日本語で詳細に書く方が効果的です。')">まず英語に翻訳してから依頼する</button>
+      <button class="opt" onclick="qa(this,'q8',true,'正解！「アウトライン確認→承認→詳細化」のように段階的に進めることで、方向性のズレを早期に修正でき、最終的な質が上がります。')">アウトラインを確認してから、段階的に肉付けしていく</button>
+    </div>
+    <div class="qfb" id="fb-q8"></div>
+  </div>
+
+  <div class="score-card" id="score">
+    <div style="font-size:12px; color:#aaa; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">最終スコア</div>
+    <div class="score-num" id="s-num">0/8</div>
+    <div class="score-msg" id="s-msg"></div>
+    <div class="score-sub" id="s-sub"></div>
+    <button class="btn" style="margin-top:20px;" onclick="retry()">もう一度挑戦する</button>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════ CH7: Q&A ══════════════════════════════════ -->
+<section class="page" id="s-qa" style="border-top:1px solid #e5e5e5;">
+<div class="inner">
+  <div class="ch-num">Chapter 7</div>
+  <h2>よくある質問 Q&amp;A</h2>
+  <p class="ch-desc">疑問をキーワードで検索するか、カテゴリで絞り込んでください。</p>
+
+  <div class="qa-search-wrap">
+    <input class="qa-search" id="qaInput" type="text" placeholder="例：インストール、料金、エラー、プロンプト…" oninput="filterQA()" />
+    <span class="qa-search-icon">🔍</span>
+  </div>
+
+  <div class="qa-cats">
+    <button class="qa-cat on" onclick="setCat('all',this)">すべて</button>
+    <button class="qa-cat" onclick="setCat('setup',this)">セットアップ</button>
+    <button class="qa-cat" onclick="setCat('code',this)">Claude Code</button>
+    <button class="qa-cat" onclick="setCat('cowork',this)">Cowork</button>
+    <button class="qa-cat" onclick="setCat('prompt',this)">プロンプト</button>
+    <button class="qa-cat" onclick="setCat('trouble',this)">トラブル</button>
+    <button class="qa-cat" onclick="setCat('price',this)">料金・プラン</button>
+  </div>
+
+  <div class="qa-count" id="qaCount"></div>
+  <div class="qa-list" id="qaList"></div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════ CH8: CHEATSHEET ══════════════════════════════════ -->
+<section class="page" id="s-cheat" style="border-top:1px solid #e5e5e5; background:#fff;">
+<div class="inner">
+  <div class="ch-num">Chapter 8</div>
+  <h2>チートシート</h2>
+  <p class="ch-desc">学んだことを凝縮した早見表です。いつでも見返せるようにブックマークしておきましょう。</p>
+
+  <h3 style="font-size:15px; font-weight:700; margin-bottom:6px;">💻 Claude Code コマンド一覧</h3>
+  <p style="font-size:12.5px; color:#888; margin-bottom:14px;">全コマンドは Mac・Windows 共通です。</p>
+  <div class="cheat-grid" style="margin-bottom:20px;">
+    <div class="cheat"><div class="cmd">claude</div><div class="cdesc">対話モードで起動</div></div>
+    <div class="cheat"><div class="cmd">claude "質問"</div><div class="cdesc">1回質問して終了（非対話モード）</div></div>
+    <div class="cheat"><div class="cmd">claude --resume</div><div class="cdesc">直前のセッションを再開</div></div>
+    <div class="cheat"><div class="cmd">claude -p "質問"</div><div class="cdesc">パイプ入力用の非対話モード</div></div>
+    <div class="cheat"><div class="cmd">/clear</div><div class="cdesc">会話コンテキストをリセット</div></div>
+    <div class="cheat"><div class="cmd">/model opus</div><div class="cdesc">高性能モデルに切り替え</div></div>
+    <div class="cheat"><div class="cmd">/cost</div><div class="cdesc">このセッションのコストを確認</div></div>
+    <div class="cheat"><div class="cmd">/review</div><div class="cdesc">最後の変更のdiffを表示</div></div>
+    <div class="cheat"><div class="cmd">/help</div><div class="cdesc">全コマンドの一覧を表示</div></div>
+    <div class="cheat"><div class="cmd">Ctrl+C</div><div class="cdesc">処理を中断する（Mac・Windows共通）</div></div>
+  </div>
+
+  <h4 style="font-size:13.5px; font-weight:700; margin-bottom:12px;">フォルダ移動コマンド（OS別）</h4>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:32px;">
+    <div class="cheat">
+      <div class="cmd">🍎 Mac / Linux</div>
+      <div class="cdesc" style="margin-top:8px; font-family:monospace; font-size:12.5px; line-height:2;">
+        cd ~/projects/my-project<br>
+        cd /path/to/folder<br>
+        ls &nbsp;&nbsp;← ファイル一覧<br>
+        pwd &nbsp;← 現在のパス確認
+      </div>
+    </div>
+    <div class="cheat">
+      <div class="cmd">🪟 Windows</div>
+      <div class="cdesc" style="margin-top:8px; font-family:monospace; font-size:12.5px; line-height:2;">
+        cd C:\Users\name\projects<br>
+        cd D:\folder\name<br>
+        dir &nbsp;&nbsp;← ファイル一覧<br>
+        cd &nbsp;&nbsp;&nbsp;← 現在のパス確認
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:15px; font-weight:700; margin-bottom:14px;">🖥️ Cowork プロンプトテンプレ</h3>
+  <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:32px;">
+    <div class="cheat"><div class="cmd">ファイル要約</div><div class="cdesc">「[ファイル名]を読んで、3点のサマリーを[対象読者]向けに書いてください」</div></div>
+    <div class="cheat"><div class="cmd">データ集計</div><div class="cdesc">「[CSV]の[列名]を[軸]で集計して、[形式]で出力してください」</div></div>
+    <div class="cheat"><div class="cmd">レポート作成</div><div class="cdesc">「[ファイル群]を読んで、[構成要素]を含む[形式]レポートを作ってください。トーンは[対象向け]で。」</div></div>
+    <div class="cheat"><div class="cmd">定期タスク</div><div class="cdesc">「毎[頻度]の[時刻]に、[処理内容]を実行して[保存先]に保存するタスクを設定してください」</div></div>
+    <div class="cheat"><div class="cmd">ファイル整理</div><div class="cdesc">「[フォルダ]内の[種類]ファイルを[分類ルール]で整理して。処理前に変更内容を確認させてください。」</div></div>
+  </div>
+
+  <h3 style="font-size:15px; font-weight:700; margin-bottom:14px;">📝 プロンプト5原則</h3>
+  <div class="cheat-grid" style="margin-bottom:32px;">
+    <div class="cheat"><div class="cmd">① 出力形式を明示</div><div class="cdesc">形式・長さ・トーンを必ず書く</div></div>
+    <div class="cheat"><div class="cmd">② 役割を与える</div><div class="cdesc">「あなたは〜専門家です」で深度アップ</div></div>
+    <div class="cheat"><div class="cmd">③ 例を見せる</div><div class="cdesc">期待する入出力の例を1〜3つ示す</div></div>
+    <div class="cheat"><div class="cmd">④ NGを伝える</div><div class="cdesc">「〜はしないで」で不要な出力を排除</div></div>
+    <div class="cheat"><div class="cmd">⑤ 段階的に進める</div><div class="cdesc">アウトライン確認→承認→詳細化</div></div>
+  </div>
+
+  <div style="background:#f5f5f5; border-radius:10px; padding:28px; text-align:center;">
+    <div style="font-size:22px; margin-bottom:10px;">🎉</div>
+    <div style="font-weight:800; font-size:18px; margin-bottom:6px;">全チャプター完了！</div>
+    <p style="font-size:14px; color:#666; max-width:420px; margin: 0 auto;">最大の上達法は実際に手を動かすことです。まず今日のルーティン作業を1つClaude Codeかコワークに任せてみましょう。</p>
+    <div style="margin-top:18px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+      <button class="btn" onclick="go('s-code')" style="font-size:13px; padding:10px 20px;">Code を復習</button>
+      <button class="btn btn-ghost" onclick="go('s-cowork')" style="font-size:13px; padding:10px 20px;">Cowork を復習</button>
+      <button class="btn btn-ghost" onclick="go('s-quiz')" style="font-size:13px; padding:10px 20px;">クイズに再挑戦</button>
+    </div>
+  </div>
+</div>
+</section>
+
+</main>
+
+<footer>
+  Claude入門ガイド — Claude Code & Cowork 完全ガイド ·
+  <a href="https://docs.claude.com" target="_blank">docs.claude.com</a> ·
+  <a href="https://claude.ai" target="_blank">claude.ai</a>
+</footer>
+
+<script>
+// ── OS SWITCHER ──
+function osSwitch(btn, group, os) {
+  // update buttons within the same .os-switcher
+  btn.closest('.os-switcher').querySelectorAll('.os-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  // update panels
+  document.getElementById(group + '-mac').classList.toggle('on', os === 'mac');
+  document.getElementById(group + '-win').classList.toggle('on', os === 'win');
+}
+
+// ── NAV & SIDEBAR ACTIVE ──
+const sids = ['hero','basics','code','cowork','prompt','workflow','quiz','qa','cheat'];
+window.addEventListener('scroll', () => {
+  let cur = 'hero';
+  sids.forEach(id => {
+    const el = document.getElementById('s-' + id);
+    if (el && scrollY >= el.offsetTop - 80) cur = id;
+  });
+  sids.forEach(id => {
+    const n = document.getElementById('n-' + id);
+    if (n) n.classList.toggle('on', id === cur);
+    const s = document.getElementById('sb-' + id);
+    if (s) s.classList.toggle('on', id === cur);
+  });
+});
+
+function go(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── LESSON TOGGLE ──
+function toggleLesson(header) {
+  const body = header.nextElementSibling;
+  const tog = header.querySelector('.lesson-toggle');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  tog.classList.toggle('open', !isOpen);
+}
+
+// ── TABS ──
+function T(group, name, btn) {
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(el => el.classList.remove('on'));
+  document.getElementById(`${group}-${name}`)?.classList.add('on');
+  btn.closest('.tabs').querySelectorAll('.tbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// ── COPY ──
+function cp(btn) {
+  const text = btn.parentElement.innerText.replace('copy','').replace('✓','').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓';
+    setTimeout(() => btn.textContent = 'copy', 1600);
+  });
+}
+
+// ── DECISION TREE ──
+function dt(type, scenario, reason) {
+  const tool = type === 'code' ? '💻 Claude Code — ' + scenario : '🖥️ Claude Cowork — ' + scenario;
+  document.getElementById('d-tool').textContent = tool;
+  document.getElementById('d-reason').textContent = reason;
+  document.getElementById('d-result').style.display = 'block';
+}
+
+// ── QUIZ ──
+let score = 0, done = {};
+const total = 8;
+
+function qa(btn, qId, ok, msg) {
+  if (done[qId]) return;
+  done[qId] = true;
+  btn.parentElement.querySelectorAll('.opt').forEach(b => b.disabled = true);
+  btn.classList.add(ok ? 'ok' : 'ng');
+  if (ok) score++;
+  const fb = document.getElementById('fb-' + qId);
+  fb.textContent = (ok ? '✅ ' : '❌ ') + msg;
+  fb.className = 'qfb on ' + (ok ? 'ok' : 'ng');
+  // mark sidebar done
+  const doneCount = Object.keys(done).length;
+  if (doneCount === total) setTimeout(showScore, 700);
+}
+
+function showScore() {
+  const sc = document.getElementById('score');
+  sc.style.display = 'block';
+  document.getElementById('s-num').textContent = score + '/' + total;
+  const levels = [
+    [0,3, 'もう一度復習しましょう 📖', '各チャプターに戻って重要ポイントを確認してください。'],
+    [4,5, 'もう少し！ 💪', '惜しい！理解が不十分な部分を復習しましょう。'],
+    [6,7, 'かなり理解できています！ 🌟', 'あとは実際に手を動かして定着させましょう。'],
+    [8,8, '完璧です！ 🏆', 'Claude Code & Coworkをマスターしました。どんどん活用していきましょう！'],
+  ];
+  const [msg, sub] = levels.find(([lo, hi]) => score >= lo && score <= hi).slice(2);
+  document.getElementById('s-msg').textContent = msg;
+  document.getElementById('s-sub').textContent = sub;
+  sc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // mark sidebar done
+  document.getElementById('sb-quiz').classList.add('done');
+}
+
+function retry() {
+  score = 0; done = {};
+  document.getElementById('score').style.display = 'none';
+  for (let i = 1; i <= total; i++) {
+    const q = document.getElementById('q' + i);
+    q.querySelectorAll('.opt').forEach(b => { b.disabled = false; b.classList.remove('ok','ng'); });
+    const fb = document.getElementById('fb-q' + i);
+    fb.className = 'qfb'; fb.textContent = '';
+  }
+  go('s-quiz');
+}
+
+// ── Q&A ──
+const QA_DATA = [
+  {
+    cat: 'setup',
+    q: 'Claude Codeのインストールに失敗します。どうすればいいですか？',
+    a: `<p>よくある原因と対処法をOS別に確認してください。</p>
+<p><strong>共通の原因</strong></p>
+<ul>
+<li><strong>Node.jsのバージョンが古い</strong>：<code>node --version</code> で v18以上を確認。古ければ <a href="https://nodejs.org" target="_blank">nodejs.org</a> からLTS版をインストールしてください</li>
+<li><strong>npmのキャッシュが壊れている</strong>：<code>npm cache clean --force</code> を実行してから再試行してください</li>
+<li><strong>企業のプロキシ環境</strong>：社内ネットワークの場合、npmのプロキシ設定が必要なことがあります。IT部門に確認してください</li>
+</ul>
+<p><strong>🍎 Mac / Linux 固有</strong></p>
+<ul>
+<li>権限エラーの場合：<code>sudo npm install -g @anthropic-ai/claude-code</code> のように <code>sudo</code> を付けて実行してください</li>
+<li>nvm（Node Version Manager）を使っている場合は <code>sudo</code> なしで実行できます（推奨）</li>
+</ul>
+<p><strong>🪟 Windows 固有</strong></p>
+<ul>
+<li><strong>PowerShellを管理者として実行</strong>してからインストールしてください（スタートメニューでPowerShellを右クリック→「管理者として実行」）</li>
+<li>「スクリプトの実行が無効になっています」エラーが出た場合：<code>Set-ExecutionPolicy RemoteSigned -Scope CurrentUser</code> を実行してから再試行してください</li>
+<li>Windowsのウイルス対策ソフトがnpmをブロックする場合があります。一時的に無効にするか、除外フォルダに追加してください</li>
+</ul>`,
+    tags: ['Claude Code', 'インストール', 'Mac', 'Windows']
+  },
+  {
+    cat: 'setup',
+    q: 'Claude Codeを起動してもブラウザが開かず認証できません',
+    a: `<p>以下を試してみてください。</p>
+<ul>
+<li>デフォルトブラウザが設定されているか確認してください（Chromeまたはデフォルトブラウザが必要）。</li>
+<li>認証URLが表示された場合は、URLをコピーしてブラウザに手動で貼り付けてください。</li>
+<li>ファイアウォールがlocalhostへの通信をブロックしている場合、ポート（通常3000番台）を許可してください。</li>
+<li>それでも解決しない場合、<code>ANTHROPIC_API_KEY</code> 環境変数を直接設定する方法もあります（APIキーはclaude.aiのアカウント設定から取得できます）。</li>
+</ul>`,
+    tags: ['Claude Code', '認証']
+  },
+  {
+    cat: 'setup',
+    q: 'Coworkはどこからダウンロードできますか？',
+    a: `<p><a href="https://claude.ai/download" target="_blank">claude.ai/download</a> からMac/Windows用のClaude for Desktopをダウンロードできます。インストール後、アプリ内でCoworkモードに切り替えてください。</p>
+<p>利用にはAnthropicのアカウントが必要です。また、Cowork機能を使うにはProプラン以上（月額20ドル〜）への加入が必要です。</p>`,
+    tags: ['Cowork', 'インストール']
+  },
+  {
+    cat: 'code',
+    q: 'Claude Codeはどのプログラミング言語に対応していますか？',
+    a: `<p>主要なプログラミング言語はすべて対応しています。特に得意とするのは以下の言語です。</p>
+<ul>
+<li><strong>フロントエンド</strong>：JavaScript / TypeScript / React / Vue / HTML+CSS</li>
+<li><strong>バックエンド</strong>：Python / Node.js / Go / Ruby / Java / PHP / Rust</li>
+<li><strong>インフラ・設定</strong>：Bash / YAML / Dockerfile / Terraform</li>
+<li><strong>データ分析</strong>：Python（pandas / numpy / matplotlib）/ R / SQL</li>
+</ul>
+<p>言語を指定しなくても、既存ファイルを見てプロジェクトの言語を自動判定します。</p>`,
+    tags: ['Claude Code', '対応言語']
+  },
+  {
+    cat: 'code',
+    q: 'Claude Codeが勝手にファイルを削除・上書きしないか心配です',
+    a: `<p>Claude Codeはデフォルトで「確認してから実行」するモードで動作します。ファイルの削除・上書きなど不可逆な操作を行う前には、必ず確認を求めます。</p>
+<p>さらに安全にするための対策として以下をおすすめします。</p>
+<ul>
+<li>作業前に <code>git init</code> してGit管理下に置くと、<code>git diff</code> で変更を確認でき、<code>git checkout</code> で元に戻せます。</li>
+<li><code>/review</code> コマンドでClaudeが行った最後の変更のdiffを確認できます。</li>
+<li>重要なファイルの変更前には「変更点の一覧を見せてから実行してください」と指示するのが有効です。</li>
+</ul>`,
+    tags: ['Claude Code', '安全性']
+  },
+  {
+    cat: 'code',
+    q: 'コードが長くて貼り付けるのが大変です。どうすればいいですか？',
+    a: `<p>Claude Codeではファイルを「貼り付ける」必要はありません。プロジェクトフォルダで起動するだけで自動的にファイルが読み込まれます。</p>
+<div style="background:#f5f5f5; border-radius:6px; padding:12px; margin:10px 0; font-family:monospace; font-size:12.5px;">
+$ cd your-project<br>
+$ claude<br>
+<span style="color:#888">✓ Context loaded: 47 files</span>
+</div>
+<p>起動後は「src/components/Header.tsx を修正して」のようにファイルパスで指定するだけで、Claudeが自動でそのファイルを読み込みます。</p>`,
+    tags: ['Claude Code', 'ファイル操作']
+  },
+  {
+    cat: 'code',
+    q: 'Claude Codeのセッション中に別のプロジェクトに切り替えたい',
+    a: `<p><code>/clear</code> コマンドで会話をリセットしてから、<code>exit</code> でClaude Codeを終了します。その後、別のフォルダに移動して再起動してください。</p>
+<div style="background:#f5f5f5; border-radius:6px; padding:12px; margin:10px 0; font-family:monospace; font-size:12.5px;">
+/clear   ← 会話リセット<br>
+exit     ← 終了<br>
+$ cd /path/to/other-project<br>
+$ claude ← 別プロジェクトで起動
+</div>
+<p>または <code>claude --resume</code> で直前のセッションを再開することもできます。</p>`,
+    tags: ['Claude Code', 'セッション管理']
+  },
+  {
+    cat: 'cowork',
+    q: 'Coworkで読み込めるファイル形式は何ですか？',
+    a: `<p>Coworkが対応している主なファイル形式は以下の通りです。</p>
+<ul>
+<li><strong>ドキュメント</strong>：Word（.docx）/ PDF / Markdown / テキスト（.txt）</li>
+<li><strong>表計算</strong>：Excel（.xlsx / .xls）/ CSV / TSV</li>
+<li><strong>画像</strong>：PNG / JPG / GIF / WebP（画像の内容を読み取れます）</li>
+<li><strong>プレゼン</strong>：PowerPoint（.pptx）</li>
+<li><strong>コード</strong>：Python / JavaScript / HTML など主要言語のソースファイル</li>
+</ul>
+<p>フォルダを指定すれば、その中の複数ファイルをまとめて処理することもできます。</p>`,
+    tags: ['Cowork', 'ファイル']
+  },
+  {
+    cat: 'cowork',
+    q: 'Coworkのスケジュール機能はどうやって使いますか？',
+    a: `<p>チャット欄に自然な言語でスケジュールを伝えるだけです。</p>
+<p>例：</p>
+<ul>
+<li>「毎週月曜の朝8時に〜を実行して」</li>
+<li>「毎月1日に〜を処理してreports/フォルダに保存して」</li>
+<li>「毎日22時にbackup/フォルダを確認して、なければアラートファイルを作って」</li>
+</ul>
+<p>設定後は「スケジュール一覧を見せて」で登録済みタスクを確認でき、「〜のタスクを削除して」でキャンセルできます。PCの電源が入っていることと、アプリが起動していることが実行の条件です。</p>`,
+    tags: ['Cowork', 'スケジュール', '自動化']
+  },
+  {
+    cat: 'cowork',
+    q: 'Coworkで作ったファイルはどこに保存されますか？',
+    a: `<p>最初に「フォルダを選択」で指定した作業フォルダの中に保存されます。</p>
+<p>保存先を明示したい場合は、プロンプトの中でファイル名やパスを指定してください。</p>
+<ul>
+<li>「report.docxとして保存して」→ 作業フォルダ直下に保存</li>
+<li>「reports/2024/monthly.xlsx として保存して」→ サブフォルダを指定して保存</li>
+</ul>
+<p>サブフォルダが存在しない場合は自動で作成してくれます。</p>`,
+    tags: ['Cowork', 'ファイル保存']
+  },
+  {
+    cat: 'cowork',
+    q: 'MCPプラグインはどうやって追加しますか？',
+    a: `<p>Claude for Desktopの設定画面からプラグインを追加できます。</p>
+<ol>
+<li>アプリ設定（歯車アイコン）を開く</li>
+<li>「プラグイン」または「MCP」タブを選択</li>
+<li>利用したいプラグイン（Slack・Gmail・Notionなど）を検索・インストール</li>
+<li>各サービスのOAuth認証を完了する</li>
+</ol>
+<p>インストール後は「今日のSlackのメンションをまとめて」「明日の会議の出席者を確認して」のように自然な言葉で使えます。</p>`,
+    tags: ['Cowork', 'MCP', '外部連携']
+  },
+  {
+    cat: 'prompt',
+    q: '同じ質問をしても毎回違う答えが返ってきます。統一させるには？',
+    a: `<p>Claudeはデフォルトで少しランダム性（温度パラメータ）を持っています。出力を安定させるためのプロンプトテクニックがあります。</p>
+<ul>
+<li><strong>出力フォーマットを厳密に指定する</strong>：「以下のJSON形式で出力してください」「表形式で出力してください」など</li>
+<li><strong>例を見せる（Few-shot）</strong>：期待する入出力の例を1〜2つ含めることで、パターンが安定します</li>
+<li><strong>「必ず〜してください」で制約を明示する</strong>：「必ず3点で答えてください」「必ず日本語で答えてください」</li>
+<li><strong>同じプロンプトをプロジェクト内に保存する</strong>：CoworkやClaude Codeでテンプレートとして再利用することで一貫性が保てます</li>
+</ul>`,
+    tags: ['プロンプト', '安定化']
+  },
+  {
+    cat: 'prompt',
+    q: 'プロンプトを書いても意図通りの結果が出ません。どう改善すればいいですか？',
+    a: `<p>よくある原因と改善策を確認してください。</p>
+<ul>
+<li><strong>出力形式を指定していない</strong>：「Word形式で」「箇条書きで3点」「表形式で」など形式を明示してください</li>
+<li><strong>対象・目的が曖昧</strong>：「誰向けに」「何のために」を書くと精度が上がります</li>
+<li><strong>一度に複数のタスクを頼んでいる</strong>：1つのプロンプトで複数の異なるタスクを指示すると品質が落ちます。分けて指示しましょう</li>
+<li><strong>前提情報が不足している</strong>：「現在の状況」「制約条件」「使っている技術スタック」などの文脈を加えてください</li>
+<li><strong>段階的に確認する</strong>：「まずアウトラインを提案してください」と最初に構成を確認する習慣をつけましょう</li>
+</ul>`,
+    tags: ['プロンプト', 'コツ']
+  },
+  {
+    cat: 'prompt',
+    q: '長い文書を要約させるとき、どう指示すれば良いですか？',
+    a: `<p>要約の目的・対象読者・形式を指定することで、使える要約になります。</p>
+<div style="background:#f5f5f5; border-radius:6px; padding:12px; margin:10px 0; font-size:13px; line-height:1.7;">
+「添付の報告書を以下の形式で要約してください。<br>
+・対象読者：経営層（専門用語を避ける）<br>
+・構成：①結論（1文）②主要ポイント3点③次のアクション<br>
+・全体の長さ：300字以内」
+</div>
+<p>「まず3行で要約して、重要と思う部分はもう少し詳しく説明して」のように段階的に深掘りする方法も効果的です。</p>`,
+    tags: ['プロンプト', '要約']
+  },
+  {
+    cat: 'prompt',
+    q: 'ClaudeにSNS投稿や広告コピーを書かせるコツは？',
+    a: `<p>マーケティングコピーを書かせるときは、以下の情報をセットで伝えると質が上がります。</p>
+<ul>
+<li><strong>商品・サービスの特徴</strong>：競合との差別化ポイントを具体的に</li>
+<li><strong>ターゲット読者</strong>：「30代の働く母親」「スタートアップのCTO」など具体的なペルソナ</li>
+<li><strong>媒体とフォーマット</strong>：Twitter（140字）/ Instagram（ハッシュタグ付き）/ Google広告（見出し30字＋説明文90字）など</li>
+<li><strong>トーン</strong>：フレンドリー / 権威的 / ユーモラス / 感情的など</li>
+<li><strong>CTA（行動喚起）</strong>：「購入する」「無料で試す」「詳細を見る」など</li>
+</ul>
+<p>「3パターン提案してください」と複数案を出させてから選ぶと、比較して選べるので効率的です。</p>`,
+    tags: ['プロンプト', 'マーケティング', 'コピーライティング']
+  },
+  {
+    cat: 'trouble',
+    q: 'Claudeが途中で回答を止めてしまいます',
+    a: `<p>出力が途中で止まる場合は、以下を試してください。</p>
+<ul>
+<li><strong>「続けてください」と入力する</strong>：多くの場合、続きを出力してくれます</li>
+<li><strong>タスクを分割する</strong>：一度に大量の出力を求めると途中で止まることがあります。「まず前半だけ出力して、確認してから後半を出力して」のように段階的に依頼してください</li>
+<li><strong>コンテキストが長くなりすぎている</strong>：会話が長くなると制限に引っかかることがあります。<code>/clear</code> で会話をリセットしてから再依頼してください</li>
+</ul>`,
+    tags: ['トラブル', '出力停止']
+  },
+  {
+    cat: 'trouble',
+    q: 'CoworkがExcelファイルをうまく読み込めません',
+    a: `<p>いくつかの原因が考えられます。</p>
+<ul>
+<li><strong>ファイルが開いている</strong>：ExcelアプリでそのファイルをOpen中の場合、Coworkが読み込めないことがあります。Excelを閉じてから再試行してください</li>
+<li><strong>パスワード保護されている</strong>：パスワード付きのExcelは読み込めません。事前にパスワードを解除してください</li>
+<li><strong>ファイルが大きすぎる</strong>：100MB超のファイルは処理が遅くなったり失敗することがあります。必要なシートだけ別ファイルにコピーして渡してください</li>
+<li><strong>旧形式（.xls）の場合</strong>：.xls形式は非対応の場合があります。.xlsx形式で保存し直してから渡してください</li>
+</ul>`,
+    tags: ['トラブル', 'Cowork', 'Excel']
+  },
+  {
+    cat: 'trouble',
+    q: 'Claude Codeが「permission denied」エラーを出します',
+    a: `<p>ファイルやディレクトリへのアクセス権限の問題です。OSごとに対処法が異なります。</p>
+<p><strong>🍎 Mac / Linux の場合</strong></p>
+<ul>
+<li>ファイルの権限を確認：<code>ls -la ファイル名</code></li>
+<li>ファイルに権限を付与：<code>chmod 644 ファイル名</code></li>
+<li>フォルダに権限を付与：<code>chmod 755 フォルダ名</code></li>
+<li>管理者権限が必要なら：<code>sudo chmod 755 フォルダ名</code></li>
+</ul>
+<p><strong>🪟 Windows の場合</strong></p>
+<ul>
+<li>PowerShellを<strong>管理者として実行</strong>してから再試行してください（スタートメニューでPowerShellを右クリック→「管理者として実行」）</li>
+<li>ファイルが読み取り専用の場合：エクスプローラーでファイルを右クリック→「プロパティ」→「読み取り専用」のチェックを外す</li>
+<li>セキュリティタブから「編集」でユーザーに「フルコントロール」権限を付与できます</li>
+</ul>
+<p><strong>共通の対処法</strong></p>
+<ul>
+<li>ファイルが別のアプリで開かれていないか確認して、閉じてから再試行する</li>
+<li><code>/etc</code>、<code>/usr</code>（Mac）や <code>C:\Windows</code>（Windows）などシステムディレクトリは通常の開発作業では触らないようにしましょう</li>
+</ul>`,
+    tags: ['トラブル', 'Claude Code', '権限', 'Mac', 'Windows']
+  },
+  {
+    cat: 'trouble',
+    q: 'Claudeが間違った情報を返してきます。どう対処すればいいですか？',
+    a: `<p>Claudeは「もっともらしい文章を生成する」モデルであるため、まれに誤情報を自信を持って答えることがあります（ハルシネーション）。</p>
+<p>対処法：</p>
+<ul>
+<li><strong>重要な情報は必ず一次ソースで確認する</strong>：公式ドキュメントやオフィシャルサイトで裏を取る習慣をつけましょう</li>
+<li><strong>「確認が取れていないことは明示して」と指示する</strong>：「不確かな情報は『要確認』と記載してください」と伝えると誠実な回答になりやすいです</li>
+<li><strong>最新情報は信頼しない</strong>：Claudeのトレーニングデータには知識のカットオフがあります。最新のライブラリバージョンやAPI仕様は公式を参照してください</li>
+<li><strong>間違いを指摘する</strong>：「それは誤りです。正しくは〜です」と指摘すると修正してくれます</li>
+</ul>`,
+    tags: ['トラブル', 'ハルシネーション', '誤情報']
+  },
+  {
+    cat: 'price',
+    q: 'Claude CodeとCoworkの料金はいくらですか？',
+    a: `<p>料金はAnthropicのプランによって異なります（2025年時点の情報です。最新は公式サイトをご確認ください）。</p>
+<ul>
+<li><strong>Claude Code</strong>：利用量に応じたAPI課金制（入力・出力トークン数で計算）。Proプランに含まれる月間利用枠内での利用も可能です</li>
+<li><strong>Claude Cowork</strong>：Proプラン（月額約$20）以上で利用可能。Cowork固有の追加料金はありません</li>
+<li><strong>Proプラン</strong>：月額約$20で、より多くのメッセージ・優先アクセス・Claude Code/Coworkが含まれます</li>
+</ul>
+<p>詳細は <a href="https://claude.ai/pricing" target="_blank">claude.ai/pricing</a> で確認してください。法人向けにはEnterpriseプランもあります。</p>`,
+    tags: ['料金', 'プラン']
+  },
+  {
+    cat: 'price',
+    q: '無料で使えますか？',
+    a: `<p>claude.ai（Webチャット）は無料プランで試すことができますが、Claude CodeとCoworkにはProプラン以上が必要です。</p>
+<ul>
+<li><strong>無料プラン</strong>：claude.aiのWebチャットのみ。1日のメッセージ数に上限あり</li>
+<li><strong>Proプラン（約$20/月）</strong>：Claude Code・Cowork・優先アクセス・より多いメッセージ数</li>
+<li><strong>Teamプラン（約$25/人/月）</strong>：チームでの利用・管理機能付き</li>
+</ul>
+<p>まずは無料のclaude.aiでClaudeの基本的な使い勝手を試してから、Claude CodeやCoworkが必要と感じたらProプランに移行するのがおすすめです。</p>`,
+    tags: ['料金', '無料プラン']
+  },
+  {
+    cat: 'price',
+    q: 'Claude Codeを使いすぎると料金が高くなりますか？',
+    a: `<p>はい、Claude CodeはAPI利用量に応じた課金があるため、大規模なコードベースを頻繁に処理すると費用が増えます。</p>
+<p>費用を抑えるコツ：</p>
+<ul>
+<li><code>/cost</code> コマンドで現在のセッション費用を随時確認する</li>
+<li><code>/clear</code> で不要な会話コンテキストを定期的にリセットする（コンテキストが大きいとトークン消費が増える）</li>
+<li>軽い質問には <code>/model haiku</code> で安価なモデルに切り替える</li>
+<li>大きなファイルを処理するときは必要な部分だけを渡す</li>
+</ul>
+<p>Proプランには月間の無料利用枠が含まれているため、通常の開発用途では追加課金なしで使えることが多いです。</p>`,
+    tags: ['料金', 'コスト管理', 'Claude Code']
+  },
+];
+
+let currentCat = 'all';
+
+function renderQA(items) {
+  const list = document.getElementById('qaList');
+  const count = document.getElementById('qaCount');
+  if (items.length === 0) {
+    list.innerHTML = '<div class="qa-none">該当する質問が見つかりませんでした。<br>別のキーワードで検索してみてください。</div>';
+    count.textContent = '';
+    return;
+  }
+  count.textContent = items.length + ' 件';
+  list.innerHTML = items.map((item, i) => `
+    <div class="qa-item" id="qa-item-${i}">
+      <div class="qa-q" onclick="toggleQA(${i})">
+        <span class="qa-q-text">${item.q}</span>
+        <span class="qa-q-icon" id="qa-icon-${i}">▼</span>
+      </div>
+      <div class="qa-a" id="qa-ans-${i}">
+        ${item.a}
+        <div style="margin-top:14px; display:flex; flex-wrap:wrap; gap:4px;">
+          ${item.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleQA(i) {
+  const ans = document.getElementById('qa-ans-' + i);
+  const icon = document.getElementById('qa-icon-' + i);
+  const isOpen = ans.classList.contains('open');
+  ans.classList.toggle('open', !isOpen);
+  icon.classList.toggle('open', !isOpen);
+}
+
+function getFiltered() {
+  const q = document.getElementById('qaInput').value.toLowerCase().trim();
+  return QA_DATA.filter(item => {
+    const matchCat = currentCat === 'all' || item.cat === currentCat;
+    if (!q) return matchCat;
+    const text = (item.q + item.a + item.tags.join(' ')).toLowerCase();
+    return matchCat && q.split(' ').every(word => text.includes(word));
+  });
+}
+
+function filterQA() {
+  renderQA(getFiltered());
+}
+
+function setCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.qa-cat').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('qaInput').value = '';
+  renderQA(getFiltered());
+}
+
+// init Q&A on load
+window.addEventListener('DOMContentLoaded', () => renderQA(QA_DATA));
+</script>
+</body>
+</html>
